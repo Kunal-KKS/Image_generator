@@ -1115,40 +1115,7 @@ def dump_default_english_config():
     dump_english_config(grh.all_components)
 
 dump_default_english_config()
-# Step 1: Setup
-# Step 2: Run Fooocus programmatically
-from modules.async_worker import AsyncTask
-import os
-from IPython.display import Image, display
 
-# Step 3: Define your prompt
-prompt = "girl in dress"
-
-# Step 4: Configure task
-task = AsyncTask(
-    prompt=prompt,
-    negative_prompt="",
-    width=512,
-    height=512,
-    steps=30,
-    cfg_scale=7.5,
-    sampler="Euler a",
-    seed=1,
-    batch_size=1,
-    n_iter=1,
-    save_images=True,
-    outdir="outputs"
-)
-
-# Step 5: Run generation
-task.run()
-
-# Step 6: Display generated image
-if os.path.exists("outputs") and os.listdir("outputs"):
-    output_path = os.path.join("outputs", os.listdir("outputs")[0])
-    display(Image(filename=output_path))
-else:
-    print("❌ No images were generated.")
 # shared.gradio_root.launch(
 #     inbrowser=args_manager.args.in_browser,
 #     server_name=args_manager.args.listen,
@@ -1158,3 +1125,69 @@ else:
 #     allowed_paths=[modules.config.path_outputs],
 #     blocked_paths=[constants.AUTH_FILENAME]
 # )
+
+
+def generate_images_without_ui(task_args):
+    """
+    Generate images without using the Gradio UI.
+    :param task_args: List of arguments required for the task.
+    """
+    import ldm_patched.modules.model_management as model_management
+    from modules.async_worker import AsyncTask
+
+    # Create an AsyncTask instance
+    task = AsyncTask(args=task_args)
+
+    # Ensure the processing mutex is not interrupted
+    with model_management.interrupt_processing_mutex:
+        model_management.interrupt_processing = False
+
+    # Start the image generation process
+    execution_start_time = time.perf_counter()
+    finished = False
+
+    worker.async_tasks.append(task)
+
+    print("Starting image generation...")
+    while not finished:
+        time.sleep(0.01)
+        if len(task.yields) > 0:
+            flag, product = task.yields.pop(0)
+            if flag == 'preview':
+                percentage, title, image = product
+                print(f"Preview: {percentage}% - {title}")
+            elif flag == 'results':
+                print("Results:", product)
+            elif flag == 'finish':
+                print("Finished:", product)
+                finished = True
+
+                # Delete temporary images if logging is disabled
+                if args_manager.args.disable_image_log:
+                    for filepath in product:
+                        if isinstance(filepath, str) and os.path.exists(filepath):
+                            os.remove(filepath)
+
+    execution_time = time.perf_counter() - execution_start_time
+    print(f'Total time: {execution_time:.2f} seconds')
+
+# Example usage:
+# Replace `example_task_args` with the actual arguments required for the task
+example_task_args = [
+    "A futuristic cityscape at sunset",  # Prompt
+    "blurry, low quality",              # Negative Prompt
+    "cyberpunk, vibrant colors",        # Style Selections
+    "high_quality",                     # Performance Selection
+    "16:9",                             # Aspect Ratios Selection
+    1,                                  # Image Number
+    "png",                              # Output Format
+    42,                                 # Image Seed
+    7.5,                                # Guidance Scale
+    0.8,                                # Sharpness
+    "stable-diffusion-v1",              # Base Model
+    "refiner-v2",                       # Refiner Model
+    "ddim",                             # Sampler Name
+    "linear",                           # Scheduler Name
+    True                                # Adaptive CFG
+]
+generate_images_without_ui(example_task_args)

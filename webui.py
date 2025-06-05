@@ -1115,7 +1115,40 @@ def dump_default_english_config():
     dump_english_config(grh.all_components)
 
 dump_default_english_config()
+# Step 1: Setup
+# Step 2: Run Fooocus programmatically
+from modules.async_worker import AsyncTask
+import os
+from IPython.display import Image, display
 
+# Step 3: Define your prompt
+prompt = "girl in dress"
+
+# Step 4: Configure task
+task = AsyncTask(
+    prompt=prompt,
+    negative_prompt="",
+    width=512,
+    height=512,
+    steps=30,
+    cfg_scale=7.5,
+    sampler="Euler a",
+    seed=1,
+    batch_size=1,
+    n_iter=1,
+    save_images=True,
+    outdir="outputs"
+)
+
+# Step 5: Run generation
+task.run()
+
+# Step 6: Display generated image
+if os.path.exists("outputs") and os.listdir("outputs"):
+    output_path = os.path.join("outputs", os.listdir("outputs")[0])
+    display(Image(filename=output_path))
+else:
+    print("❌ No images were generated.")
 # shared.gradio_root.launch(
 #     inbrowser=args_manager.args.in_browser,
 #     server_name=args_manager.args.listen,

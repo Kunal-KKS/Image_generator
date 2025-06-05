@@ -1174,6 +1174,8 @@ def generate_images_without_ui(task_args):
 # Example usage:
 # Replace `example_task_args` with the actual arguments required for the task
 example_task_args = [
-    "A futuristic cityscape at sunset"                            # Adaptive CFG
-]
+    "A futuristic cityscape at sunset",  # Prompt
+    "blurry, low quality",              # Negative Prompt
+    "cyberpunk, vibrant colors",        # Style Selections
+    "high_quality"]
 generate_images_without_ui(example_task_args)

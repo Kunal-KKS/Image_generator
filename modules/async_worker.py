@@ -13,7 +13,7 @@ class AsyncTask:
         from modules.util import get_enabled_loras
         from modules.config import default_max_lora_number
         import args_manager
-
+        print(args,"asssssssssssssssssssssssssssssss ar")
         self.args = args.copy()
         self.yields = []
         self.results = []
@@ -200,6 +200,9 @@ def worker():
     from modules.upscaler import perform_upscale
     from modules.flags import Performance
     from modules.meta_parser import get_metadata_parser
+    import json
+    import pprint
+    import threading
 
     pid = os.getpid()
     print(f'Started worker with PID {pid}')
@@ -281,6 +284,39 @@ def worker():
                      denoising_strength, final_scheduler_name, goals, initial_latent, steps, switch, positive_cond,
                      negative_cond, task, loras, tiled, use_expansion, width, height, base_progress, preparation_steps,
                      total_count, show_intermediate_results, persist_image=True):
+        # Collect all variables into a list
+        # Convert variables to JSON serializable format
+        variables_dict = {
+            "all_steps": int(all_steps),
+            "async_task": str(async_task),
+            "callback": str(callback),
+            "controlnet_canny_path": str(controlnet_canny_path),
+            "controlnet_cpds_path": str(controlnet_cpds_path),
+            "current_task_id": int(current_task_id),
+            "denoising_strength": float(denoising_strength),
+            "final_scheduler_name": str(final_scheduler_name),
+            "goals": list(goals),
+            "initial_latent": str(initial_latent) if initial_latent is not None else None,
+            "steps": int(steps),
+            "switch": int(switch),
+            "positive_cond": str(positive_cond),
+            "negative_cond": str(negative_cond),
+            "task": str(task),
+            "loras": [str(lora) for lora in loras],
+            "tiled": bool(tiled),
+            "use_expansion": bool(use_expansion),
+            "width": int(width),
+            "height": int(height),
+            "base_progress": int(base_progress),
+            "preparation_steps": int(preparation_steps),
+            "total_count": int(total_count),
+            "show_intermediate_results": bool(show_intermediate_results),
+            "persist_image": bool(persist_image)
+        }
+
+        # Write the dictionary to a text file
+        with open("process_task_input.json", "w") as file:
+            json.dump(variables_dict, file, indent=4)
         if async_task.last_stop is not False:
             ldm_patched.modules.model_management.interrupt_current_processing()
         if 'cn' in goals:
@@ -640,6 +676,15 @@ def worker():
 
     def process_prompt(async_task, prompt, negative_prompt, base_model_additional_loras, image_number, disable_seed_increment, use_expansion, use_style,
                        use_synthetic_refiner, current_progress, advance_progress=False):
+        # Collect all variables into a list
+        variables_list = [
+            prompt, negative_prompt, base_model_additional_loras, image_number, 
+            disable_seed_increment, use_expansion, use_style, use_synthetic_refiner, 
+            current_progress, advance_progress
+        ]
+
+        # Print the list to the console
+        print("Process Prompt Variables List:", variables_list)
         prompts = remove_empty_str([safe_str(p) for p in prompt.splitlines()], default='')
         negative_prompts = remove_empty_str([safe_str(p) for p in negative_prompt.splitlines()], default='')
         prompt = prompts[0]
@@ -968,6 +1013,43 @@ def worker():
                         prompt, negative_prompt, final_scheduler_name, goals, height, img, mask,
                         preparation_steps, steps, switch, tiled, total_count, use_expansion, use_style,
                         use_synthetic_refiner, width, show_intermediate_results=True, persist_image=True):
+        
+         # Print all received variables
+        print("Received variables:")
+        print(f"all_steps: {all_steps}")
+        print(f"async_task: {async_task}")
+        print(f"callback: {callback}")
+        print(f"controlnet_canny_path: {controlnet_canny_path}")
+        print(f"controlnet_cpds_path: {controlnet_cpds_path}")
+        print(f"current_progress: {current_progress}")
+        print(f"current_task_id: {current_task_id}")
+        print(f"denoising_strength: {denoising_strength}")
+        print(f"inpaint_disable_initial_latent: {inpaint_disable_initial_latent}")
+        print(f"inpaint_engine: {inpaint_engine}")
+        print(f"inpaint_respective_field: {inpaint_respective_field}")
+        print(f"inpaint_strength: {inpaint_strength}")
+        print(f"prompt: {prompt}")
+        print(f"negative_prompt: {negative_prompt}")
+        print(f"final_scheduler_name: {final_scheduler_name}")
+        print(f"goals: {goals}")
+        print(f"height: {height}")
+        print(f"img: {img}")
+        print(f"mask: {mask}")
+        print(f"preparation_steps: {preparation_steps}")
+        print(f"steps: {steps}")
+        print(f"switch: {switch}")
+        print(f"tiled: {tiled}")
+        print(f"total_count: {total_count}")
+        print(f"use_expansion: {use_expansion}")
+        print(f"use_style: {use_style}")
+        print(f"use_synthetic_refiner: {use_synthetic_refiner}")
+        print(f"width: {width}")
+        print(f"show_intermediate_results: {show_intermediate_results}")
+        print(f"persist_image: {persist_image}")
+        
+        
+        print("done-------------------------------------------------")
+        
         base_model_additional_loras = []
         inpaint_head_model_path = None
         inpaint_parameterized = inpaint_engine != 'None'  # inpaint_engine = None, improve detail
@@ -1111,6 +1193,12 @@ def worker():
 
         print(f'[Parameters] CFG = {async_task.cfg_scale}')
 
+        def expand_and_print_variable(variable):
+            print("ASYNC TASK Expanded Variable:")
+            variable_dict = {attr: getattr(variable, attr) for attr in dir(variable) if not attr.startswith("__")}
+            print(variable_dict)
+
+        expand_and_print_variable(async_task)
         initial_latent = None
         denoising_strength = 1.0
         tiled = False
@@ -1460,26 +1548,37 @@ def worker():
             print(f'Enhancement image time: {enhancement_image_time:.2f} seconds')
 
         stop_processing(async_task, processing_start_time)
-        return
+        return imgs
+    imgs=None
 
-    while True:
+    while imgs == None:
         time.sleep(0.01)
         if len(async_tasks) > 0:
             task = async_tasks.pop(0)
-
+            print(task)
             try:
                 handler(task)
-                if task.generate_image_grid:
-                    build_image_wall(task)
                 task.yields.append(['finish', task.results])
-                pipeline.prepare_text_encoder(async_call=True)
+                imgs= task.results
+                print(imgs,"_____________________________________hey img")
+                print('kollllllaaaa')
+                print('kollllllaaaa3')
+                print('kollllllaaaa4')
+                print('kollllllaaaa5')
+                # pipeline.prepare_text_encoder(async_call=True)
+                break
             except:
+                print("Error in async worker:")
                 traceback.print_exc()
                 task.yields.append(['finish', task.results])
-            finally:
-                if pid in modules.patch.patch_settings:
-                    del modules.patch.patch_settings[pid]
-    pass
+            # finally:
+            #     print("Finally block executed",imgs)
+            #     if imgs is not None:
+            #         print('returning image from finally block')
+            #         return imgs
+            #     if pid in modules.patch.patch_settings:
+            #         del modules.patch.patch_settings[pid]   
+    return imgs
 
 
 threading.Thread(target=worker, daemon=True).start()

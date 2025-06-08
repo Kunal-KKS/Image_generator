@@ -1581,4 +1581,4 @@ def worker():
     return imgs
 
 
-threading.Thread(target=worker, daemon=True).start()
+# threading.Thread(target=worker, daemon=False).start()

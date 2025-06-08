@@ -3,6 +3,8 @@ from fastapi import FastAPI, Response
 from fastapi.responses import StreamingResponse
 import os
 import uvicorn
+import threading
+import sys
 
 app = FastAPI()
 def getImageFromPath(prompt):
@@ -16,34 +18,51 @@ def getImageFromPath(prompt):
     print("img res",response)
     return response[0]
 
-# @app.get("/image/{prompt}", response_class=StreamingResponse, responses={
-#     200: {
-#         "content": {"image/png": {}},
-#         "description": "Returns an image based on the prompt."
-#     },
-#     404: {
-#         "description": "Image not found."
-#     }
-# })
-# def get_image(prompt: str):
-#     IMAGE_PATH=getImageFromPath(prompt)
-#     if not os.path.exists(IMAGE_PATH):
-#         return Response(content="Image not found", status_code=404)
+@app.get("/image/{prompt}", response_class=StreamingResponse, responses={
+    200: {
+        "content": {"image/png": {}},
+        "description": "Returns an image based on the prompt."
+    },
+    404: {
+        "description": "Image not found."
+    }
+})
+def get_image(prompt: str):
+    IMAGE_PATH=getImageFromPath(prompt)
+    if not os.path.exists(IMAGE_PATH):
+        return Response(content="Image not found", status_code=404)
 
-#     def iterfile():
-#         with open(IMAGE_PATH, mode="rb") as file_like:
-#             yield from file_like
+    def iterfile():
+        with open(IMAGE_PATH, mode="rb") as file_like:
+            yield from file_like
 
-#     return StreamingResponse(iterfile(), media_type="image/png")
-
-
-# # Main entry point to run with `python main.py`
-# if __name__ == "__main__":
-#     uvicorn.run("z:app", host="127.0.0.1", port=8000, reload=True)
+    return StreamingResponse(iterfile(), media_type="image/png")
 
 
-print(getImageFromPath("kunal"))
-print(getImageFromPath("girl"))
-print(getImageFromPath("bird"))
-print(getImageFromPath("cat"))
-print(getImageFromPath("dog"))
+# Main entry point to run with `python main.py`
+if __name__ == "__main__":
+    uvicorn.run("z:app", host="127.0.0.1", port=8000, reload=True)
+
+
+# print(getImageFromPath("kunal"), "kunal")
+# print(getImageFromPath("girl"),"girl")
+# print(getImageFromPath("bird"),"bird")
+# print(getImageFromPath("cat"),"cat")
+# print(getImageFromPath("dog"),"dog")
+
+
+# def kill_all_threads():
+#     main_thread = threading.current_thread()
+#     for t in threading.enumerate():
+#         if t is not main_thread:
+#             try:
+#                 # Python does not provide a direct way to kill threads.
+#                 # As a workaround, we can try to exit the process.
+#                 # Alternatively, set a flag in your threads to exit gracefully.
+#                 print(f"Attempting to kill thread: {t.name}")
+#             except Exception as e:
+#                 print(f"Error killing thread {t.name}: {e}")
+#     print("Exiting process to kill all threads.")
+#     sys.exit()
+
+# kill_all_threads()

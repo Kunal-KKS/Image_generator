@@ -1,7 +1,6 @@
 
 import os
 
-app = FastAPI()
 def getImageFromPath(prompt):
     from modules.async_worker import worker, AsyncTask, async_tasks
     from modules import async_worker
@@ -16,3 +15,4 @@ def getImageFromPath(prompt):
 print(getImageFromPath(input('Enter prompt 1:', inputs_prompt1)))
 print(getImageFromPath(input('Enter prompt 2:', inputs_prompt2)))
 print(getImageFromPath(input('Enter prompt 3:', inputs_prompt3)))
+

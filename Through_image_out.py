@@ -12,7 +12,7 @@ def getImageFromPath(prompt):
     print("img res",response)
     return response[0]
 
-print(getImageFromPath(input('Enter prompt 1:', inputs_prompt1)))
-print(getImageFromPath(input('Enter prompt 2:', inputs_prompt2)))
-print(getImageFromPath(input('Enter prompt 3:', inputs_prompt3)))
+print(getImageFromPath(input('Enter prompt 1:')))
+print(getImageFromPath(input('Enter prompt 2:')))
+print(getImageFromPath(input('Enter prompt 3:')))
 

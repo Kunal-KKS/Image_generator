@@ -1,7 +1,7 @@
 import os
 import sys
 
-def update_repo():
+def update_entry():
     root = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(root)
     os.chdir(root)
@@ -43,6 +43,6 @@ def update_repo():
 
     print('Update succeeded.')
 
-update_repo()
+update_entry()
 
 from launch import *

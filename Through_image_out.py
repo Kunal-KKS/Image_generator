@@ -1,6 +1,11 @@
 
 import os
-
+import argparse
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--share', action='store_true')
+    parser.add_argument('--always-high-vram', action='store_true')
+    args = parser.parse_args()
 def getImageFromPath(prompt):
     from modules.async_worker import worker, AsyncTask, async_tasks
     from modules import async_worker
@@ -12,4 +17,4 @@ def getImageFromPath(prompt):
     print("img res",response)
     return response[0]
 
-print(getImageFromPath(input('Enter prompt 1:')))
+

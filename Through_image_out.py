@@ -1,11 +1,17 @@
 
 import os
 import argparse
-if __name__ == "__main__":
+def main():
+    import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--share', action='store_true')
-    parser.add_argument('--always-high-vram', action='store_true')
+    parser.add_argument('--share', action='store_true', help="Enable sharing")
+    parser.add_argument('--always-high-vram', action='store_true', help="Use high VRAM mode")
     args = parser.parse_args()
+
+    if args.share:
+        print("[INFO] Sharing is enabled.")
+    if args.always_high_vram:
+        print("[INFO] Running in high VRAM mode.")
 def getImageFromPath(prompt):
     from modules.async_worker import worker, AsyncTask, async_tasks
     from modules import async_worker
@@ -16,5 +22,8 @@ def getImageFromPath(prompt):
     print(async_worker.async_tasks,"kunal-------------------------------------------------------------------")
     print("img res",response)
     return response[0]
+
+if __name__ == "__main__":
+    main()
 
 
